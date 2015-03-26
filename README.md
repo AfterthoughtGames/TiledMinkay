@@ -24,7 +24,7 @@ Better question how many programers would it take to design a good level? Answer
 
 **How many monkeys would it take to write a section of useable code?**
 
-It would take 15, wrap you head around that.
+It would take 15, wrap your head around that.
 
 ## References
 The format I am coding for is outlined here:
