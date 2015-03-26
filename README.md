@@ -1,6 +1,8 @@
 # TiledMinkay ![Alt text](/images/MonkeyTile.png?raw=true "Monkey in the Tile")  
 
-You put a Tiled in my Monkey and now it loads XML.
+**You put a Tiled in my Monkey and now it loads XML.**
+
+This small little library is meant to load and possibly even save maps crated with a Tiled compatible editor. The goal in the end is as loosely couple the various parts of the library as possible allowing the end user to pick and choose the features to replace or just disregard.
 
 ## Why
 After using some wonderful but limiting Tiled libraries for .net I decided to write my own. Can't be to hard, can it?
@@ -12,14 +14,18 @@ Due to the fact that most likely no one will ask me this set of questions but I 
 
 I find that was as developers take our selfs entirely to seriously. Most project names explain exactly what the project is, use some sort of boring acronym, or have some overly hip name. So why not name this little project after one of the most beloved and goofy animals in the world, the Monkey.
 
-*Wait I thought the name of this project was TiledMinkay? How did you get Monkey from Minkay?*
+**Wait I thought the name of this project was TiledMinkay? How did you get Monkey from Minkay?**
+
 Well my adoring and wonderful wife in her youth would call Monkeys, Minkays. So seeing that i feel no need to take my self seriously I decided the use a child’s version of the for mentioned animals name.
 
-*How many monkeys would it take to design a good level?*
+**How many monkeys would it take to design a good level?**
+
 Better question how many programers would it take to design a good level? Answer that one and you might be closer to the previous question.
 
-*How many monkeys would it take to write a section of useable code?*
+**How many monkeys would it take to write a section of useable code?**
+
 It would take 15, wrap you head around that.
 
+## References
 The format I am coding for is outlined here:
 https://github.com/bjorn/tiled/wiki/TMX-Map-Format
