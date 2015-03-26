@@ -8,7 +8,8 @@ After using some wonderful but limiting Tiled libraries for .net I decided to wr
 ## PAQ
 Due to the fact that most likely no one will ask me this set of questions but I feel like answering them any way I have produced a new .... thing, Possibly Asked Questions.
 
-*Why in the heck did you call this slice of awsomeness TiledMinkay?*
+**Why in the heck did you call this slice of awsomeness TiledMinkay?**
+
 I find that was as developers take our selfs entirely to seriously. Most project names explain exactly what the project is, use some sort of boring acronym, or have some overly hip name. So why not name this little project after one of the most beloved and goofy animals in the world, the Monkey.
 
 *Wait I thought the name of this project was TiledMinkay? How did you get Monkey from Minkay?*
