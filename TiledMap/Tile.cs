@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TiledMinkay
+namespace TiledMap
 {
-    public class TileOffset
+    public class Tile
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        public int GID { get; set; }
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TiledMinkay
+namespace TiledMap
 {
     public enum EncodingType
     {
@@ -20,6 +20,7 @@ namespace TiledMinkay
     {
         public EncodingType Encoding { get; set; }
         public CompressionType Compression { get; set; }
+        public string Value { get; set; }
         List<Tile> Tiles { get; set; }
 
         //Can contain: tile

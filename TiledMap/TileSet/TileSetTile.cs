@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TiledMap.Layer;
 
-namespace TiledMinkay
+namespace TiledMap.TileSet
 {
     public class TileSetTile
     {
@@ -16,6 +17,7 @@ namespace TiledMinkay
         public float Probability { get; set; }
         public Image TileImage { get; set; }
 
+        public ObjectGroup ObjectGroupObject { get; set; }
         //Can contain: properties, image (since 0.9.0), objectgroup (since 0.10.0)
     }
 }

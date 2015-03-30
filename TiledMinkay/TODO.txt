@@ -1,12 +1,2 @@
-﻿Object Group
-Object
-ellipse
-polygon
-polyline
-imagelayer
-properties
-property
-
-wire the thing up
-crate a read and maybe a write static functions
+﻿crate a read and maybe a write static functions
 any other wacky thing to make map stuff fun

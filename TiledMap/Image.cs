@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TiledMinkay
+namespace TiledMap
 {
     public enum FormatTypes
     {
@@ -18,6 +18,8 @@ namespace TiledMinkay
         public string Trans { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+
+        public Data DataObject { get; set; }
 
     }
 }
