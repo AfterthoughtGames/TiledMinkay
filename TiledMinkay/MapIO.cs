@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml;
+using TiledMap.Layer;
 
 namespace TiledMinkay
 {
@@ -83,6 +84,7 @@ namespace TiledMinkay
                 if(currentChildElement.Name == "tileset")
                 {
                     mapToReturn.TileSets.Add(LoadTiledTileset(currentChildElement));
+
                 }
 
                 // TODO: Finish all of the map loading routines
@@ -117,52 +119,150 @@ namespace TiledMinkay
                 #region Image
                 if (currentEle.Name == "image")
                 {
-                    Image tempImg = new Image();
-                    tempImg.Source = currentEle.GetAttribute("source");
-                    tempImg.Width = Convert.ToInt32(currentEle.GetAttribute("width"));
-                    tempImg.Height = Convert.ToInt32(currentEle.GetAttribute("height"));
-
-                    if(currentEle.HasChildNodes)
-                    {
-                        foreach(XmlElement imgInnerNode in currentEle.ChildNodes)
-                        {
-                            if(imgInnerNode.Name == "data")
-                            {
-                                tempImg.DataObject = new Data();
-
-                                //  None, Base64, CSV
-                                switch (imgInnerNode.GetAttribute("encoding"))
-                                {
-                                    case "base64":
-                                        tempImg.DataObject.Encoding = EncodingType.Base64;
-                                        break;
-                                    case "csv":
-                                        tempImg.DataObject.Encoding = EncodingType.CSV;
-                                        break;
-                                    default:
-                                        throw new Exception("unrconized data encoding in titleset data: " + imgInnerNode.GetAttribute("encoding"));
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        tempImg.DataObject = null;
-                    }
-
-                    tileSetToReturn.Images.Add(tempImg);
+                    tileSetToReturn.Images.Add(LoadImage(currentEle));
                 }
                 #endregion
 
                 if(currentEle.Name == "tile")
                 {
-                    TileSetTile tempTile = new TileSetTile();
-                    tempTile.ID = Convert.ToInt32(currentEle.GetAttribute("id"));
-                    // TODO: finish the rest of this code for tile loading with in a tileset
+                    // TODO: finish loading tile in map object
                 }
             }
 
             throw new Exception("Not yet implanted");
+        }
+
+        private static Image LoadImage(XmlElement imageElement)
+        {
+            Image tempImg = new Image();
+            tempImg.Source = imageElement.GetAttribute("source");
+            tempImg.Width = Convert.ToInt32(imageElement.GetAttribute("width"));
+            tempImg.Height = Convert.ToInt32(imageElement.GetAttribute("height"));
+
+            if (imageElement.HasChildNodes)
+            {
+                foreach (XmlElement imgInnerNode in imageElement.ChildNodes)
+                {
+                    if (imgInnerNode.Name == "data")
+                    {
+                        tempImg.DataObject = new Data();
+
+                        //  None, Base64, CSV
+                        switch (imgInnerNode.GetAttribute("encoding"))
+                        {
+                            case "base64":
+                                tempImg.DataObject.Encoding = EncodingType.Base64;
+                                break;
+                            case "csv":
+                                tempImg.DataObject.Encoding = EncodingType.CSV;
+                                break;
+                            default:
+                                throw new Exception("unrconized data encoding in titleset data: " + imgInnerNode.GetAttribute("encoding"));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                tempImg.DataObject = null;
+            }
+
+            return tempImg;
+        }
+
+        private static List<Property> LoadProperties(XmlElement propElement)
+        {
+            List<Property> tempProps = new List<Property>();
+
+            foreach(XmlElement currentElement in propElement.ChildNodes)
+            {
+                Property tempProp = new Property();
+                tempProp.Name = currentElement.GetAttribute("name");
+                tempProp.Value = currentElement.GetAttribute("value");
+                tempProps.Add(tempProp);
+            }
+
+            return tempProps;
+        }
+
+        private static ObjectGroup LoadObjectGroup(XmlElement objGroupElement)
+        {
+            ObjectGroup tempObjG = new ObjectGroup();
+
+            tempObjG.Name = objGroupElement.GetAttribute("name");
+            tempObjG.Color = objGroupElement.GetAttribute("color");
+            tempObjG.X = Convert.ToInt32(objGroupElement.GetAttribute("x"));
+            tempObjG.Y = Convert.ToInt32(objGroupElement.GetAttribute("y"));
+            tempObjG.Width = Convert.ToInt32(objGroupElement.GetAttribute("width"));
+            tempObjG.Height = Convert.ToInt32(objGroupElement.GetAttribute("height"));
+            tempObjG.Opacity = float.Parse(objGroupElement.GetAttribute("opacity"));
+            
+            switch(objGroupElement.GetAttribute("visible"))
+            {
+                case "0":
+                    tempObjG.Visable = false;
+                    break;
+                case "1":
+                    tempObjG.Visable = true;
+                    break;
+                default:
+                    throw new Exception("invalid value for visibility of an object group");
+            }
+
+            foreach(XmlElement currentElement in objGroupElement.ChildNodes)
+            {
+                if(currentElement.Name == "properties")
+                {
+                    tempObjG.Properties = LoadProperties(currentElement);
+                }
+
+                if(currentElement.Name == "object")
+                {
+                    // TODO: Finish loading objects in object group
+                }
+            }
+        }
+
+        private static TileSetTile LoadTileSetTile(XmlElement tileElement)
+        {
+            TileSetTile tempTile = new TileSetTile();
+            tempTile.ID = Convert.ToInt32(tileElement.GetAttribute("id"));
+
+            if (tileElement.HasAttribute("terrain"))
+            {
+                string preseprate = tileElement.GetAttribute("terrain");
+                string[] terrainAtt = preseprate.Split(',');
+                tempTile.TerrainTopLeft = Convert.ToInt32(terrainAtt[0]);
+                tempTile.TerrainTopRight = Convert.ToInt32(terrainAtt[1]);
+                tempTile.TerrainBottemLeft = Convert.ToInt32(terrainAtt[2]);
+                tempTile.TerrainBottemRight = Convert.ToInt32(terrainAtt[3]);
+            }
+
+            if (tileElement.HasAttribute("probability"))
+            {
+                tempTile.Probability = float.Parse(tileElement.GetAttribute("probability"));
+            }
+
+            foreach(XmlElement currentElemet in tileElement.ChildNodes)
+            {
+                // HACK: only loading one image
+                if(currentElemet.Name == "image")
+                {
+                    tempTile.TileImage = LoadImage(currentElemet);
+                }
+
+                if(currentElemet.Name == "properties")
+                {
+                    tempTile.Prperties = LoadProperties(currentElemet);
+                }
+
+                if(currentElemet.Name == "objectgroup")
+                {
+                    // TODO: finish loading object group in tileset
+                }
+            }
+
+            // TODO: finish the rest of this code for tile loading with in a tileset
         }
 
         public static void SaveTiledTileset(MapTileSet tileSetToSave)

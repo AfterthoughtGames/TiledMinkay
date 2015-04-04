@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TiledMap.Layer;
+using TiledMap.Object;
 
 namespace TiledMap.TileSet
 {
@@ -18,6 +19,7 @@ namespace TiledMap.TileSet
         public Image TileImage { get; set; }
 
         public ObjectGroup ObjectGroupObject { get; set; }
+        public List<Property> Prperties { get; set; }
         //Can contain: properties, image (since 0.9.0), objectgroup (since 0.10.0)
     }
 }
