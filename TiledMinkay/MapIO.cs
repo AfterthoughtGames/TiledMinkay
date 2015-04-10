@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml;
 using TiledMap.Layer;
+using TiledMap.Object;
 
 namespace TiledMinkay
 {
@@ -87,10 +88,25 @@ namespace TiledMinkay
 
                 }
 
+                if(currentChildElement.Name == "properties")
+                {
+                    mapToReturn.Properties = LoadProperties(currentChildElement);
+                }
+
+                if(currentChildElement.Name == "objectgroup")
+                {
+                    mapToReturn.ObjectGroups.Add(LoadObjectGroup(currentChildElement));
+                }
+
+                if(currentChildElement.Name == "imagelayer")
+                {
+                    mapToReturn.ImageLayers.Add()
+                }
+
                 // TODO: Finish all of the map loading routines
             }
 
-            throw new Exception("Not yet implanted");
+            //throw new Exception("Not yet implanted");
         }
 
         public static void SaveTiledMap(Map mapToSave)
@@ -125,11 +141,135 @@ namespace TiledMinkay
 
                 if(currentEle.Name == "tile")
                 {
-                    // TODO: finish loading tile in map object
+                    tileSetToReturn.Tiles.Add(LoadTileSetTile(currentEle));
+                }
+
+                if(currentEle.Name == " tileoffset")
+                {
+                    tileSetToReturn.Offset = LoadOffSet(currentEle);
+                }
+
+                if(currentEle.Name == "properties")
+                {
+                    tileSetToReturn.Properties = LoadProperties(currentEle);
+                }
+
+                if(currentEle.Name == "image")
+                {
+                    tileSetToReturn.Images.Add(LoadImage(currentEle));
+                }
+
+                if(currentEle.Name == "terraintypes")
+                {
+                    tileSetToReturn.TerrainTypes = LoadTerrainTypes(currentEle);
                 }
             }
 
-            throw new Exception("Not yet implanted");
+            return tileSetToReturn;
+        }
+
+        private static ImageLayer LoadImageLayer(XmlElement imageLayerEle)
+        {
+            ImageLayer layerToReturn = new ImageLayer();
+            layerToReturn.Name = imageLayerEle.GetAttribute("name");
+            layerToReturn.X = Convert.ToInt32(imageLayerEle.GetAttribute("x"));
+            layerToReturn.Y = Convert.ToInt32(imageLayerEle.GetAttribute("y"));
+            layerToReturn.Width = Convert.ToInt32(imageLayerEle.GetAttribute("width"));
+            layerToReturn.Height = Convert.ToInt32(imageLayerEle.GetAttribute("height"));
+            layerToReturn.Opacity = Convert.ToBoolean(imageLayerEle.GetAttribute(""));
+        }
+
+        private static MapLayer LoadLayer(XmlElement mapLayerEle)
+        {
+            MapLayer layer = new MapLayer();
+            layer.Name = mapLayerEle.GetAttribute("name");
+            layer.X = Convert.ToInt32(mapLayerEle.GetAttribute("x"));
+            layer.Y = Convert.ToInt32(mapLayerEle.GetAttribute("y"));
+            layer.Width = Convert.ToInt32(mapLayerEle.GetAttribute("width"));
+            layer.Height = Convert.ToInt32(mapLayerEle.GetAttribute("height"));
+            layer.Opacity = float.Parse(mapLayerEle.GetAttribute("opacity"));
+            layer.Visable = Convert.ToBoolean(mapLayerEle.GetAttribute("visible"));
+
+            foreach(XmlElement currentEle in mapLayerEle.ChildNodes)
+            {
+                if (currentEle.Name == "properties")
+                {
+                    layer.Properties = LoadProperties(currentEle);
+                }
+
+                if(currentEle.Name == "data")
+                {
+                    layer.DataObject = LoadDataObject(currentEle);
+                }
+
+                
+            }
+
+            return layer;
+        }
+
+        private static Data LoadDataObject(XmlElement dataEle)
+        {
+            Data dataToReturn = new Data();
+            
+            switch(dataEle.GetAttribute("encoding"))
+            {
+                case "base64":
+                    dataToReturn.Encoding = EncodingType.Base64;
+                    break;
+                case "csv":
+                    dataToReturn.Encoding = EncodingType.CSV;
+                    break;
+            }
+
+            switch(dataEle.GetAttribute("compression"))
+            {
+                case "gzip":
+                    dataToReturn.Compression = CompressionType.gzip;
+                    break;
+                case "zlib":
+                    dataToReturn.Compression = CompressionType.zlib;
+                    break;
+            }
+
+            dataToReturn.Value = dataEle.Value;
+
+            return dataToReturn;
+        }
+
+        private static List<Terrain> LoadTerrainTypes(XmlElement terrListEle)
+        {
+            List<Terrain> tempTerr = new List<Terrain>();
+            
+            foreach(XmlElement currentEle in terrListEle.ChildNodes)
+            {
+                Terrain newTerr = new Terrain();
+                newTerr.Name = currentEle.GetAttribute("name");
+                newTerr.TileID = Convert.ToInt32(currentEle.GetAttribute("tile"));
+
+                if(currentEle.HasChildNodes)
+                {
+                    foreach(XmlElement innerCurrentEle in currentEle.ChildNodes)
+                    {
+                        if(innerCurrentEle.Name == "properties")
+                        {
+                            newTerr.Properties = LoadProperties(innerCurrentEle);
+                        }
+                    }
+                }
+
+                tempTerr.Add(newTerr);
+            }
+
+            return tempTerr;
+        }
+
+        private static TileOffset LoadOffSet(XmlElement currentEle)
+        {
+            TileOffset offset = new TileOffset();
+            offset.X = Convert.ToInt32(currentEle.GetAttribute("x"));
+            offset.Y = Convert.ToInt32(currentEle.GetAttribute("y"));
+            return offset;
         }
 
         private static Image LoadImage(XmlElement imageElement)
@@ -218,9 +358,12 @@ namespace TiledMinkay
 
                 if(currentElement.Name == "object")
                 {
-                    // TODO: Finish loading objects in object group
+                    tempObjG.Objects.Add(LoadObject(currentElement));
+
                 }
             }
+
+            return tempObjG;
         }
 
         private static TileSetTile LoadTileSetTile(XmlElement tileElement)
@@ -258,11 +401,84 @@ namespace TiledMinkay
 
                 if(currentElemet.Name == "objectgroup")
                 {
-                    // TODO: finish loading object group in tileset
+                    tempTile.ObjectGroupObject = LoadObjectGroup(currentElemet);
                 }
+
             }
 
-            // TODO: finish the rest of this code for tile loading with in a tileset
+            return tempTile;
+        }
+
+        private static MapObject LoadObject(XmlElement objectElement)
+        {
+            MapObject tempObj = new MapObject();
+            tempObj.Ellipse = false;
+            tempObj.ID = Convert.ToInt32(objectElement.GetAttribute("id"));
+            tempObj.Name = objectElement.GetAttribute("name");
+            tempObj.Type = objectElement.GetAttribute("type");
+            tempObj.X = Convert.ToInt32(objectElement.GetAttribute("x"));
+            tempObj.Y = Convert.ToInt32(objectElement.GetAttribute("y"));
+            tempObj.Width = Convert.ToInt32(objectElement.GetAttribute("width"));
+            tempObj.Height = Convert.ToInt32(objectElement.GetAttribute("height"));
+            tempObj.Visable = Convert.ToBoolean(objectElement.GetAttribute("visible"));
+
+            if (objectElement.HasAttribute("gid"))
+            {
+                tempObj.GID = Convert.ToInt32(objectElement.GetAttribute("gid"));
+            }
+
+            foreach(XmlElement currentEle in objectElement)
+            {
+                switch (currentEle.Name)
+                {
+                    case "ellipse":
+                        tempObj.Ellipse = true;
+                        break;
+                    case "polygon":
+                        tempObj.PolygonObject = LoadPolygon(currentEle);
+                        break;
+                    case "polyline":
+                        tempObj.PolylineObject = LoadPolyline(currentEle);
+                        break;
+                    case "image":
+                        tempObj.Img = LoadImage(currentEle);
+                        break;
+                    default:
+                        break;
+                }
+
+                
+            }
+
+            return tempObj;
+        }
+
+        private static Polygon LoadPolygon(XmlElement polyEle)
+        {
+            Polygon tempPloy = new Polygon();
+            tempPloy.Points = new List<Point>();
+            string[] points = polyEle.GetAttribute("polygon").Split(' ');
+            foreach(string currentRawPointSet in points)
+            {
+                string[] pointSet = currentRawPointSet.Split(',');
+                tempPloy.Points.Add(new Point { X = Convert.ToInt32(pointSet[0]), Y = Convert.ToInt32(pointSet[1]) });
+            }
+
+            return tempPloy;
+        }
+
+        private static Polyline LoadPolyline(XmlElement lineEle)
+        {
+            Polyline line = new Polyline();
+            line.Points = new List<Point>();
+            string[] points = lineEle.GetAttribute("polygon").Split(' ');
+            foreach (string currentRawPointSet in points)
+            {
+                string[] pointSet = currentRawPointSet.Split(',');
+                line.Points.Add(new Point { X = Convert.ToInt32(pointSet[0]), Y = Convert.ToInt32(pointSet[1]) });
+            }
+
+            return line;
         }
 
         public static void SaveTiledTileset(MapTileSet tileSetToSave)
@@ -270,5 +486,7 @@ namespace TiledMinkay
             // TODO: Finish save Tileset to file
             throw new Exception("Not yet implanted");
         }
+
+        
     }
 }
