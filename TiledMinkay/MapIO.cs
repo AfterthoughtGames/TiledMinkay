@@ -275,6 +275,24 @@ namespace TiledMinkay
                         }
                     }
                     #endregion
+                    else if(layer.DataObject.Encoding == EncodingType.CSV)
+                    {
+                        string[] tiles = layer.DataObject.Value.Split(',');
+                        for(int elementCount =0; elementCount < tiles.Length; elementCount++)
+                        {
+                            layer.Tiles.Add(new Tile { GID = int.Parse(tiles[elementCount]), X = elementCount % layer.Width, Y = elementCount / layer.Width });
+                        }
+                    }
+                    else
+                    {
+                        int eleCount = 0;
+                        foreach(XmlElement currentInnerEle in currentEle.ChildNodes)
+                        {
+                            layer.Tiles.Add(new Tile { GID = Convert.ToInt32(currentInnerEle.GetAttribute("gid")), X = eleCount % layer.Width, Y = eleCount / layer.Width });
+                            eleCount++;
+                        }
+                    }
+
                 }
 
                 
