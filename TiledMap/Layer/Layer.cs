@@ -21,6 +21,7 @@ namespace TiledMap.Layer
 
         public Data DataObject { get; set; }
         public List<Property> Properties { get; set; }
+        public List<Tile> Tiles { get; set; }
         // Can contain: properties, data
     }
 }

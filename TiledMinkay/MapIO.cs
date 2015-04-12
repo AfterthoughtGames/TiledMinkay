@@ -9,6 +9,8 @@ using System.Xml.Linq;
 using System.Xml;
 using TiledMap.Layer;
 using TiledMap.Object;
+using System.IO;
+using System.IO.Compression;
 
 namespace TiledMinkay
 {
@@ -17,14 +19,6 @@ namespace TiledMinkay
     {
         public static Map LoadTiledMap(string fileNameAndPath)
         {
-            // You are probably wondering why so much stuff crammed in to one function
-            // https://msdn.microsoft.com/en-us/library/ms973852.aspx
-            // the more static calls we make the slower the operation will take
-            // while in most cases nested function calls are ok. however we are
-            // talking about loading maps for video games in a managed environment.
-            // The less calls we can make the better. So I have traded nested calls
-            // for regions that only effect readability and not code speed.
-
             XmlDocument docObj = new XmlDocument();
             docObj.Load(fileNameAndPath);
 
@@ -100,13 +94,12 @@ namespace TiledMinkay
 
                 if(currentChildElement.Name == "imagelayer")
                 {
-                    mapToReturn.ImageLayers.Add()
+                    mapToReturn.ImageLayers.Add(LoadImageLayer(currentChildElement));
                 }
 
-                // TODO: Finish all of the map loading routines
             }
 
-            //throw new Exception("Not yet implanted");
+            return mapToReturn;
         }
 
         public static void SaveTiledMap(Map mapToSave)
@@ -176,7 +169,23 @@ namespace TiledMinkay
             layerToReturn.Y = Convert.ToInt32(imageLayerEle.GetAttribute("y"));
             layerToReturn.Width = Convert.ToInt32(imageLayerEle.GetAttribute("width"));
             layerToReturn.Height = Convert.ToInt32(imageLayerEle.GetAttribute("height"));
-            layerToReturn.Opacity = Convert.ToBoolean(imageLayerEle.GetAttribute(""));
+            layerToReturn.Opacity = float.Parse(imageLayerEle.GetAttribute("opacity"));
+            layerToReturn.Visable = Convert.ToBoolean(imageLayerEle.GetAttribute("visible"));
+
+            foreach(XmlElement currentEle in imageLayerEle)
+            {
+                if(currentEle.Name == "properties")
+                {
+                    layerToReturn.Properties = LoadProperties(currentEle);
+                }
+
+                if(currentEle.Name == "image")
+                {
+                    layerToReturn.Img = LoadImage(currentEle);
+                }
+            }
+
+            return layerToReturn;
         }
 
         private static MapLayer LoadLayer(XmlElement mapLayerEle)
@@ -200,6 +209,72 @@ namespace TiledMinkay
                 if(currentEle.Name == "data")
                 {
                     layer.DataObject = LoadDataObject(currentEle);
+
+                    // decode data
+                    #region Base64Decode
+                    if (layer.DataObject.Encoding == EncodingType.Base64)
+                    {
+                        byte[] dataByte = Convert.FromBase64String(layer.DataObject.Value);
+                        Stream tileStream = new MemoryStream(dataByte, false);
+
+                        if(layer.DataObject.Compression == CompressionType.gzip)
+                        {
+                            tileStream = new GZipStream(tileStream, CompressionMode.Decompress, false);
+                        }
+                        else
+                        {
+                            tileStream = new Ionic.Zlib.ZlibStream(tileStream, Ionic.Zlib.CompressionMode.Decompress, false);
+                        }
+
+                        using (BinaryReader reader = new BinaryReader(tileStream))
+                        {
+                            for(int yCord = 0; yCord < layer.Height; yCord++)
+                            {
+                                for (int xCord = 0; xCord < layer.Width; xCord++)
+                                {
+                                    UInt32 tileData = reader.ReadUInt32();
+
+                                    Tile tempTile = new Tile();
+
+                                    if((tileData & Tile.FLIPPED_HORIZONTALLY_FLAG) != 0)
+                                    {
+                                        tempTile.HorizontalFlip = true;
+                                    }
+                                    else
+                                    {
+                                        tempTile.HorizontalFlip = false;
+                                    }
+
+                                    if((tileData & Tile.FLIPPED_VERTICALLY_FLAG) != 0)
+                                    {
+                                        tempTile.VerticalFlip = true;
+                                    }
+                                    else
+                                    {
+                                        tempTile.VerticalFlip = false;
+                                    }
+
+                                    if((tileData & Tile.FLIPPED_DIAGONALLY_FLAG) != 0)
+                                    {
+                                        tempTile.DiagonalFlip = true;
+                                    }
+                                    else
+                                    {
+                                        tempTile.DiagonalFlip = false;
+                                    }
+
+                                    tileData &= ~(Tile.FLIPPED_HORIZONTALLY_FLAG |Tile.FLIPPED_VERTICALLY_FLAG | Tile.FLIPPED_DIAGONALLY_FLAG);
+
+                                    tempTile.X = xCord;
+                                    tempTile.Y = yCord;
+                                    tempTile.GID = (int)tileData;
+
+                                    layer.Tiles.Add(tempTile);
+                                }
+                            }
+                        }
+                    }
+                    #endregion
                 }
 
                 
