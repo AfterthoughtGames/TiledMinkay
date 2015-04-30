@@ -26,6 +26,9 @@ namespace TiledMinkay
 
             #region MapValues
             Map mapToReturn = new Map();
+            mapToReturn.TileSets = new List<MapTileSet>();
+            mapToReturn.ObjectGroups = new List<ObjectGroup>();
+            mapToReturn.Layers = new List<MapLayer>();
             mapToReturn.Version = mapRoot.GetAttribute("version");
             
             switch(mapRoot.GetAttribute("orientation"))
@@ -82,6 +85,11 @@ namespace TiledMinkay
 
                 }
 
+                if(currentChildElement.Name == "layer")
+                {
+                    mapToReturn.Layers.Add(LoadLayer(currentChildElement));
+                }
+
                 if(currentChildElement.Name == "properties")
                 {
                     mapToReturn.Properties = LoadProperties(currentChildElement);
@@ -108,20 +116,39 @@ namespace TiledMinkay
             throw new Exception("Not yet implanted");
         }
 
-        public static MapTileSet LoadTiledTileset(string fileAndPath)
+        public static MapTileSet LoadTiledTileset(MapTileSet tileSetObj, string baseURI)
         {
             // TODO: Finish load Tiled Tileset from file
 
-            throw new Exception("Not yet implanted");
+            // spliting the uri to find the working dir
+            string[] uriPart = baseURI.Split('/');
+            baseURI = baseURI.Replace(uriPart[uriPart.Length - 1], "");
+            baseURI = baseURI.Replace("file:///", "");
+
+            XmlDocument docObj = new XmlDocument();
+            docObj.Load(baseURI + tileSetObj.Source);
+
+            XmlElement tileSetRoot = docObj["tileset"];
+
+            // ooo... recursive calls are fun
+            return LoadTiledTileset(tileSetRoot);
         }
 
         public static MapTileSet LoadTiledTileset(XmlElement tileSetElement)
         {
             MapTileSet tileSetToReturn = new MapTileSet();
-            tileSetToReturn.FirstGrid = Convert.ToInt32(tileSetElement.GetAttribute("firstgid"));
+            tileSetToReturn.Tiles = new List<TileSetTile>();
+            if (tileSetElement.HasAttribute("firstgid")) tileSetToReturn.FirstGrid = Convert.ToInt32(tileSetElement.GetAttribute("firstgid"));
             tileSetToReturn.Name = tileSetElement.GetAttribute("name");
-            tileSetToReturn.TileWidth = Convert.ToInt32(tileSetElement.GetAttribute("tilewidth"));
-            tileSetToReturn.TileHeight = Convert.ToInt32(tileSetElement.GetAttribute("tileheight"));
+
+            if (tileSetElement.HasAttribute("tilewidth")) tileSetToReturn.TileWidth = Convert.ToInt32(tileSetElement.GetAttribute("tilewidth"));
+            if (tileSetElement.HasAttribute("tileheight")) tileSetToReturn.TileHeight = Convert.ToInt32(tileSetElement.GetAttribute("tileheight"));
+            if (tileSetElement.HasAttribute("source")) tileSetToReturn.Source = tileSetElement.GetAttribute("source");
+
+            if(tileSetToReturn.Source != null)
+            {
+                tileSetToReturn = LoadTiledTileset(tileSetToReturn, tileSetElement.OwnerDocument.BaseURI.ToString());
+            }
 
             foreach(XmlElement currentEle in tileSetElement.ChildNodes)
             {
@@ -191,13 +218,14 @@ namespace TiledMinkay
         private static MapLayer LoadLayer(XmlElement mapLayerEle)
         {
             MapLayer layer = new MapLayer();
+            layer.Tiles = new List<Tile>();
             layer.Name = mapLayerEle.GetAttribute("name");
-            layer.X = Convert.ToInt32(mapLayerEle.GetAttribute("x"));
-            layer.Y = Convert.ToInt32(mapLayerEle.GetAttribute("y"));
+            if(mapLayerEle.HasAttribute("x")) layer.X = Convert.ToInt32(mapLayerEle.GetAttribute("x"));
+            if (mapLayerEle.HasAttribute("y")) layer.Y = Convert.ToInt32(mapLayerEle.GetAttribute("y"));
             layer.Width = Convert.ToInt32(mapLayerEle.GetAttribute("width"));
             layer.Height = Convert.ToInt32(mapLayerEle.GetAttribute("height"));
-            layer.Opacity = float.Parse(mapLayerEle.GetAttribute("opacity"));
-            layer.Visable = Convert.ToBoolean(mapLayerEle.GetAttribute("visible"));
+            if (mapLayerEle.HasAttribute("opacity")) layer.Opacity = float.Parse(mapLayerEle.GetAttribute("opacity"));
+            if (mapLayerEle.HasAttribute("visible")) layer.Visable = Convert.ToBoolean(mapLayerEle.GetAttribute("visible"));
 
             foreach(XmlElement currentEle in mapLayerEle.ChildNodes)
             {
@@ -325,7 +353,10 @@ namespace TiledMinkay
                     break;
             }
 
-            dataToReturn.Value = dataEle.Value;
+            dataToReturn.Value = dataEle.InnerText;
+            // HACK: just trying to get the data to format correctly
+            //dataToReturn.Value = dataToReturn.Value.Replace("\\r\\n", "");
+            //dataToReturn.Value = dataToReturn.Value.Replace(@" ", "");
 
             return dataToReturn;
         }
@@ -421,25 +452,29 @@ namespace TiledMinkay
         private static ObjectGroup LoadObjectGroup(XmlElement objGroupElement)
         {
             ObjectGroup tempObjG = new ObjectGroup();
+            tempObjG.Objects = new List<MapObject>();
 
             tempObjG.Name = objGroupElement.GetAttribute("name");
             tempObjG.Color = objGroupElement.GetAttribute("color");
-            tempObjG.X = Convert.ToInt32(objGroupElement.GetAttribute("x"));
-            tempObjG.Y = Convert.ToInt32(objGroupElement.GetAttribute("y"));
-            tempObjG.Width = Convert.ToInt32(objGroupElement.GetAttribute("width"));
-            tempObjG.Height = Convert.ToInt32(objGroupElement.GetAttribute("height"));
-            tempObjG.Opacity = float.Parse(objGroupElement.GetAttribute("opacity"));
-            
-            switch(objGroupElement.GetAttribute("visible"))
+            if(objGroupElement.HasAttribute("x")) tempObjG.X = Convert.ToInt32(objGroupElement.GetAttribute("x"));
+            if (objGroupElement.HasAttribute("y")) tempObjG.Y = Convert.ToInt32(objGroupElement.GetAttribute("y"));
+            if (objGroupElement.HasAttribute("width")) tempObjG.Width = Convert.ToInt32(objGroupElement.GetAttribute("width"));
+            if (objGroupElement.HasAttribute("height")) tempObjG.Height = Convert.ToInt32(objGroupElement.GetAttribute("height"));
+            if (objGroupElement.HasAttribute("opacity")) tempObjG.Opacity = float.Parse(objGroupElement.GetAttribute("opacity"));
+
+            if (objGroupElement.HasAttribute("visible"))
             {
-                case "0":
-                    tempObjG.Visable = false;
-                    break;
-                case "1":
-                    tempObjG.Visable = true;
-                    break;
-                default:
-                    throw new Exception("invalid value for visibility of an object group");
+                switch (objGroupElement.GetAttribute("visible"))
+                {
+                    case "0":
+                        tempObjG.Visable = false;
+                        break;
+                    case "1":
+                        tempObjG.Visable = true;
+                        break;
+                    default:
+                        throw new Exception("invalid value for visibility of an object group");
+                }
             }
 
             foreach(XmlElement currentElement in objGroupElement.ChildNodes)
@@ -505,15 +540,16 @@ namespace TiledMinkay
         private static MapObject LoadObject(XmlElement objectElement)
         {
             MapObject tempObj = new MapObject();
+            tempObj.Properties = new List<Property>();
             tempObj.Ellipse = false;
-            tempObj.ID = Convert.ToInt32(objectElement.GetAttribute("id"));
-            tempObj.Name = objectElement.GetAttribute("name");
-            tempObj.Type = objectElement.GetAttribute("type");
-            tempObj.X = Convert.ToInt32(objectElement.GetAttribute("x"));
-            tempObj.Y = Convert.ToInt32(objectElement.GetAttribute("y"));
-            tempObj.Width = Convert.ToInt32(objectElement.GetAttribute("width"));
-            tempObj.Height = Convert.ToInt32(objectElement.GetAttribute("height"));
-            tempObj.Visable = Convert.ToBoolean(objectElement.GetAttribute("visible"));
+            if (objectElement.HasAttribute("id")) tempObj.ID = Convert.ToInt32(objectElement.GetAttribute("id"));
+            if (objectElement.HasAttribute("name")) tempObj.Name = objectElement.GetAttribute("name");
+            if (objectElement.HasAttribute("type")) tempObj.Type = objectElement.GetAttribute("type");
+            if (objectElement.HasAttribute("x")) tempObj.X = Convert.ToInt32(objectElement.GetAttribute("x"));
+            if (objectElement.HasAttribute("y")) tempObj.Y = Convert.ToInt32(objectElement.GetAttribute("y"));
+            if (objectElement.HasAttribute("width")) tempObj.Width = Convert.ToInt32(objectElement.GetAttribute("width"));
+            if (objectElement.HasAttribute("height")) tempObj.Height = Convert.ToInt32(objectElement.GetAttribute("height"));
+            if (objectElement.HasAttribute("visible")) tempObj.Visable = Convert.ToBoolean(objectElement.GetAttribute("visible"));
 
             if (objectElement.HasAttribute("gid"))
             {
@@ -536,11 +572,12 @@ namespace TiledMinkay
                     case "image":
                         tempObj.Img = LoadImage(currentEle);
                         break;
+                    case "properties":
+                        tempObj.Properties = LoadProperties(currentEle);
+                        break;
                     default:
                         break;
                 }
-
-                
             }
 
             return tempObj;
